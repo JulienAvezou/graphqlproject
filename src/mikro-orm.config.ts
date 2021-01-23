@@ -6,7 +6,7 @@ import path from "path";
 // access info via CLI
 export default {
   migrations: {
-    // create absolute path
+    // creates absolute path
     path: path.join(__dirname, "./migrations"), // path to the folder with migrations
     pattern: /^[\w-]+\d+\.[tj]s$/, // regex pattern for the migration files
   },
