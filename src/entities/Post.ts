@@ -9,14 +9,14 @@ export class Post {
   id!: number;
 
   // represents one column in table
-  @Property()
+  @Property({ type: 'date'})
   createdAt = new Date();
 
   // represents one column in table
-  @Property({ onUpdate: () => new Date() })
+  @Property({ type: 'date', onUpdate: () => new Date() })
   updatedAt = new Date();
 
   // represents one column in table
-  @Property()
+  @Property({type: 'text'})
   title!: string;
 }
