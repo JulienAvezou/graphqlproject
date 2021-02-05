@@ -68,11 +68,12 @@ export class UserResolver {
       // duplicat username error
       if (err.code === "2505" || err.detail.includes("already exists")) {
         return {
-          errors: [{
-            field: "username",
-            message: "username already taken",
-          },
-        ],
+          errors: [
+            {
+              field: "username",
+              message: "username already taken",
+            },
+          ],
         }
       }
     }
@@ -103,7 +104,7 @@ export class UserResolver {
       }
     }
     return {
-      user;
+      user,
     }
   }
 }
