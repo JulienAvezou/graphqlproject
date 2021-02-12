@@ -3,6 +3,7 @@ import { MyContext } from "src/types";
 import { Resolver, Query, Mutation, InputType, Field, Arg, Ctx, ObjectType } from "type-graphql";
 import argon2 from 'argon2';
 import { EntityManager } from "@mikro-orm/postgresql";
+import { COOKIE_NAME } from "../constants";
 
 // *** @... are known as decorators ***
 // InputType used as arguments
@@ -135,5 +136,20 @@ export class UserResolver {
     return {
       user,
     }
+  }
+
+  @Mutation(() => Boolean)
+  logout(@Ctx() { req, res }: MyContext) {
+    return new Promise((resolve) =>
+      req.session.destroy((err: any) => {
+        res.clearCookie(COOKIE_NAME);
+        if (err) {
+          console.log(err);
+          resolve(false);
+          return;
+        }     
+        resolve(true);
+      })
+    );
   }
 }
