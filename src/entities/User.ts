@@ -26,6 +26,11 @@ export class User {
   @Property({type: 'text', unique: true})
   username!: string;
 
+  // represents one column in table
+  @Field()
+  @Property({type: 'text', unique: true})
+  email!: string;
+
    // represents one column in table
    // no field property, so password  not accessible from graphql, only present in db
    @Property({type: 'text'})
