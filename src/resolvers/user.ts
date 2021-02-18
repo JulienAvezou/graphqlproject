@@ -1,9 +1,12 @@
 import { User } from "../entities/User";
 import { MyContext } from "src/types";
-import { Resolver, Query, Mutation, InputType, Field, Arg, Ctx, ObjectType } from "type-graphql";
+import { Resolver, Query, Mutation, Field, Arg, Ctx, ObjectType } from "type-graphql";
 import argon2 from 'argon2';
 import { EntityManager } from "@mikro-orm/postgresql";
 import { COOKIE_NAME } from "../constants";
+import { validateRegister } from "../utils/validateRegister";
+import { UsernamePasswordInput } from "./UsernamePasswordInput";
+import { sendEmail } from "../utils/sendEmail";
 
 @ObjectType()
 class FieldError {
@@ -26,7 +29,16 @@ class UserResponse {
 export class UserResolver {
   @Mutation(() => Boolean)
   async forgotPassword(@Arg("email") email: string, @Ctx() { em }: MyContext) {
-    // const user = await.em.findOne(User, { email });
+    const user = await em.findOne(User, { email });
+    if (!user) {
+      return true;
+    }
+    const token = "fhfhfhfhfjjk"; 
+    await sendEmail(
+      email,
+      `<a href="http://localhost:3000/change-password/${token}">reset password</a>`
+    );
+
     return true;
   }
 
@@ -43,10 +55,10 @@ export class UserResolver {
 
   @Mutation(() => UserResponse)
   async register(
-    @Arg('options') options: UserNamePasswordInput,
+    @Arg('options') options: UsernamePasswordInput,
     @Ctx() { req, em }: MyContext
   ): Promise<UserResponse> {
-    const errors  validateRegister(options);
+    const errors = validateRegister(options);
     if (errors) {
       return { errors };
     }
@@ -94,12 +106,12 @@ export class UserResolver {
   ): Promise<UserResponse> {
     const user = await em.findOne(User,
       usernameOrEmail.includes('@')
-      ? { email: options.username }
-      : { username: options.username });
+      ? { email: usernameOrEmail }
+      : { username: usernameOrEmail });
     if (!user) {
       return {
         errors: [{
-          field: "username",
+          field: "usernameOrEmail",
           message: "that username doesn't exist",
         }]
       }

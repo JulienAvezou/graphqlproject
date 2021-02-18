@@ -1,10 +1,9 @@
 import { InputType, Field } from "type-graphql";
-import { UserNamePasswordInput } from "../resolvers/UserNamePasswordInput";
 
 // *** @... are known as decorators ***
 // InputType used as arguments
 @InputType()
-class UserNamePasswordInput {
+export class UsernamePasswordInput {
   @Field()
   email: string;
   @Field()

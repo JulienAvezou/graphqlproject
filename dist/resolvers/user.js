@@ -23,13 +23,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserResolver = void 0;
 const User_1 = require("../entities/User");
 const type_graphql_1 = require("type-graphql");
 const argon2_1 = __importDefault(require("argon2"));
 const constants_1 = require("../constants");
+const validateRegister_1 = require("../utils/validateRegister");
+const UsernamePasswordInput_1 = require("./UsernamePasswordInput");
+const sendEmail_1 = require("../utils/sendEmail");
 let FieldError = class FieldError {
 };
 __decorate([
@@ -59,6 +61,12 @@ UserResponse = __decorate([
 let UserResolver = class UserResolver {
     forgotPassword(email, { em }) {
         return __awaiter(this, void 0, void 0, function* () {
+            const user = yield em.findOne(User_1.User, { email });
+            if (!user) {
+                return true;
+            }
+            const token = "fhfhfhfhfjjk";
+            yield sendEmail_1.sendEmail(email, `<a href="http://localhost:3000/change-password/${token}">reset password</a>`);
             return true;
         });
     }
@@ -73,8 +81,7 @@ let UserResolver = class UserResolver {
     }
     register(options, { req, em }) {
         return __awaiter(this, void 0, void 0, function* () {
-            const errors, validateRegister;
-            (options);
+            const errors = validateRegister_1.validateRegister(options);
             if (errors) {
                 return { errors };
             }
@@ -113,12 +120,12 @@ let UserResolver = class UserResolver {
     login(usernameOrEmail, password, { em, req }) {
         return __awaiter(this, void 0, void 0, function* () {
             const user = yield em.findOne(User_1.User, usernameOrEmail.includes('@')
-                ? { email: options.username }
-                : { username: options.username });
+                ? { email: usernameOrEmail }
+                : { username: usernameOrEmail });
             if (!user) {
                 return {
                     errors: [{
-                            field: "username",
+                            field: "usernameOrEmail",
                             message: "that username doesn't exist",
                         }]
                 };
@@ -169,7 +176,7 @@ __decorate([
     __param(0, type_graphql_1.Arg('options')),
     __param(1, type_graphql_1.Ctx()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_a = typeof UserNamePasswordInput !== "undefined" && UserNamePasswordInput) === "function" ? _a : Object, Object]),
+    __metadata("design:paramtypes", [UsernamePasswordInput_1.UsernamePasswordInput, Object]),
     __metadata("design:returntype", Promise)
 ], UserResolver.prototype, "register", null);
 __decorate([
