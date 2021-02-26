@@ -1,5 +1,5 @@
-import { Entity, PrimaryKey, Property } from "@mikro-orm/core";
 import { Field, ObjectType } from "type-graphql";
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 // represents table in db
 @ObjectType()
@@ -8,31 +8,31 @@ export class User {
 
   // represents one column in table
   @Field()
-  @PrimaryKey()
+  @PrimaryGeneratedColumn()
   id!: number;
 
   // represents one column in table
   @Field(() => String)
-  @Property({ type: 'date'})
-  createdAt = new Date();
+  @CreateDateColumn()
+  createdAt: Date;
 
   // represents one column in table
   @Field(() => String)
-  @Property({ type: 'date', onUpdate: () => new Date() })
-  updatedAt = new Date();
+  @UpdateDateColumn()
+  updatedAt: Date;
 
   // represents one column in table
   @Field()
-  @Property({type: 'text', unique: true})
+  @Column({unique: true})
   username!: string;
 
   // represents one column in table
   @Field()
-  @Property({type: 'text', unique: true})
+  @Column({unique: true})
   email!: string;
 
    // represents one column in table
    // no field property, so password  not accessible from graphql, only present in db
-   @Property({type: 'text'})
+   @Column()
    password!: string;
 }

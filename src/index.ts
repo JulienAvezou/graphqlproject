@@ -1,6 +1,4 @@
 import "reflect-metadata";
-import { MikroORM } from "@mikro-orm/core";
-import microConfig from "./mikro-orm.config";
 import express from 'express';
 import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
@@ -12,12 +10,21 @@ import session from 'express-session';
 import connectRedis from 'connect-redis';
 import { COOKIE_NAME, __prod__ } from "./constants";
 import cors from 'cors';
+import { createConnection } from 'typeorm';
+import { Post } from './entities/Post';
+import { User } from './entities/User';
 
 const main = async () => {
   // connect to db
-  const orm = await MikroORM.init(microConfig);
-  // run migration
-  await orm.getMigrator().up();
+  const conn = await createConnection({
+    type: 'postgres',
+    database: 'graphql2',
+    username: 'postgres',
+    password: 'postgres',
+    logging: true,
+    synchronize: true,
+    entities: [Post, User],
+  });
 
   // setup server
   const app = express();
