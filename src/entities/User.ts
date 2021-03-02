@@ -1,25 +1,16 @@
 import { Field, ObjectType } from "type-graphql";
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, BaseEntity, OneToMany } from 'typeorm';
+import { Post } from "./Post";
 
 // represents table in db
 @ObjectType()
 @Entity()
-export class User {
+export class User extends BaseEntity {
 
   // represents one column in table
   @Field()
   @PrimaryGeneratedColumn()
   id!: number;
-
-  // represents one column in table
-  @Field(() => String)
-  @CreateDateColumn()
-  createdAt: Date;
-
-  // represents one column in table
-  @Field(() => String)
-  @UpdateDateColumn()
-  updatedAt: Date;
 
   // represents one column in table
   @Field()
@@ -33,6 +24,19 @@ export class User {
 
    // represents one column in table
    // no field property, so password  not accessible from graphql, only present in db
-   @Column()
-   password!: string;
+  @Column()
+  password!: string;
+
+  @OneToMany(() => Post, (post) => post.creator)
+  posts: Post[];
+
+     // represents one column in table
+  @Field(() => String)
+  @CreateDateColumn()
+  createdAt: Date;
+
+  // represents one column in table
+  @Field(() => String)
+  @UpdateDateColumn()
+  updatedAt: Date;
 }
