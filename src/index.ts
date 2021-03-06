@@ -13,6 +13,7 @@ import cors from 'cors';
 import { createConnection } from 'typeorm';
 import { Post } from './entities/Post';
 import { User } from './entities/User';
+import { Updoot } from "./entities/Updoot";
 
 const main = async () => {
   // connect to db
@@ -23,7 +24,7 @@ const main = async () => {
     password: 'postgres',
     logging: true,
     synchronize: true,
-    entities: [Post, User],
+    entities: [Post, User, Updoot],
   });
 
   // setup server
