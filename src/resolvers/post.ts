@@ -111,21 +111,6 @@ export class PostResolver {
     limit $1
     `, replacements);
 
-    // const qb = getConnection()
-    //   .getRepository(Post)
-    //   .createQueryBuilder("p")
-    //   .innerJoinAndSelect("p.creator", "u", 'u.id" = p."creatorId"')
-    //   .orderBy('p."createdAt"', "DESC")
-    //   .take(realLimitPlusOne);
-
-    // if (cursor) {
-    //   qb.where('p."createdAt" > :cursor', {
-    //     cursor: new Date(parseInt(cursor)),
-    //   });
-    // }
-
-    // const posts = await qb.getMany();
-
     return { 
       posts: posts.slice(0, realLimit),
       hasMore: posts.length === realLimitPlusOne,
@@ -134,8 +119,8 @@ export class PostResolver {
 
   @Query(() => Post, { nullable: true })
   post(
-    @Arg("id") id: number): Promise<Post | undefined > { // typescript type for the mutation
-    return Post.findOne(id);
+    @Arg("id", () => Int) id: number): Promise<Post | undefined > { // typescript type for the mutation
+    return Post.findOne(id, { relations: ["creator"] });
   }
 
   @Mutation(() => Post)
@@ -153,29 +138,38 @@ export class PostResolver {
   }
 
   @Mutation(() => Post, {nullable: true})
+  @UseMiddleware(isAuth)
   async updatePost(
     // graphql can infer type based on typescript types
-    @Arg("id") id: number,
-    @Arg("title", () => String, {nullable: true}) title: string,
+    @Arg("id", () => Int) id: number,
+    @Arg("title") title: string,
+    @Arg("text") text: string,
+    @Ctx() { req }: MyContext
     // typescript type for the mutation
   ): Promise<Post | null> {
-    const post = await Post.findOne(id);
-    if (!post) {
-      return null
-    }
-    if (typeof title != "undefined") {
-      await Post.update({ id }, { title });
-    }
-    return post;
+    const result = await getConnection()
+      .createQueryBuilder()
+      .update(Post)
+      .set({ title, text })
+      .where('id = :id and "creatorId" = :creatorId', {
+        id,
+        creatorId: req.session.userId,
+      })
+      .returning("*")
+      .execute();
+    
+      return result.raw[0];
   }
 
   @Mutation(() => Boolean)
+  @UseMiddleware(isAuth)
   async deletePost(
     // graphql can infer type based on typescript types
-    @Arg("id") id: number,
+    @Arg("id", () => Int) id: number,
+    @Ctx() { req }: MyContext
     // typescript type for the mutation
   ): Promise<Boolean> {
-    await Post.delete(id);
+    await Post.delete({ id, creator: req.session.userId });
     return true;
   }
 }
