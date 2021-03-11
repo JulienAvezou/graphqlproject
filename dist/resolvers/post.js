@@ -22,11 +22,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PostResolver = void 0;
-const Updoot_1 = require("../entities/Updoot");
 const isAuth_1 = require("../middleware/isAuth");
 const type_graphql_1 = require("type-graphql");
 const typeorm_1 = require("typeorm");
 const Post_1 = require("../entities/Post");
+const Updoot_1 = require("../entities/Updoot");
 let PostInput = class PostInput {
 };
 __decorate([
@@ -54,8 +54,8 @@ PaginatedPosts = __decorate([
     type_graphql_1.ObjectType()
 ], PaginatedPosts);
 let PostResolver = class PostResolver {
-    textSnippet(root) {
-        return root.text.slice(0, 50);
+    textSnippet(post) {
+        return post.text.slice(0, 50);
     }
     vote(postId, value, { req }) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -74,15 +74,15 @@ let PostResolver = class PostResolver {
           update post
           set points = points + $1
           where id = $2
-          `, [2 * realValue, postId]);
+        `, [2 * realValue, postId]);
                 }));
             }
             else if (!updoot) {
                 yield typeorm_1.getConnection().transaction((tm) => __awaiter(this, void 0, void 0, function* () {
                     yield tm.query(`
         insert into updoot ("userId", "postId", value)
-        values ($1,$2,$3)
-        `, [userId, postId, realValue]);
+        values ($1, $2, $3)
+      `, [userId, postId, realValue]);
                     yield tm.query(`
           update post
           set points = points + $1
@@ -133,9 +133,6 @@ let PostResolver = class PostResolver {
     }
     createPost(input, { req }) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (!req.session.userId) {
-                throw new Error("not authenticated");
-            }
             return Post_1.Post.create(Object.assign(Object.assign({}, input), { creatorId: req.session.userId })).save();
         });
     }
@@ -156,7 +153,7 @@ let PostResolver = class PostResolver {
     }
     deletePost(id, { req }) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield Post_1.Post.delete({ id, creator: req.session.userId });
+            yield Post_1.Post.delete({ id, creatorId: req.session.userId });
             return true;
         });
     }
@@ -196,6 +193,7 @@ __decorate([
 ], PostResolver.prototype, "post", null);
 __decorate([
     type_graphql_1.Mutation(() => Post_1.Post),
+    type_graphql_1.UseMiddleware(isAuth_1.isAuth),
     __param(0, type_graphql_1.Arg("input")),
     __param(1, type_graphql_1.Ctx()),
     __metadata("design:type", Function),

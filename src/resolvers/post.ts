@@ -1,29 +1,30 @@
-import { Updoot } from "../entities/Updoot";
 import { isAuth } from "../middleware/isAuth";
-import { MyContext } from "src/types";
+import { MyContext } from "../types";
 import { Resolver, Query, Mutation, Arg, InputType, Field, Ctx, Int, FieldResolver, Root, ObjectType, UseMiddleware } from "type-graphql";
 import { getConnection } from "typeorm";
 import { Post } from "../entities/Post";
+import { Updoot } from "../entities/Updoot";
+
 @InputType()
 class PostInput {
   @Field()
-  title: string
+  title: string;
   @Field()
-  text: string
+  text: string;
 }
 
 @ObjectType()
 class PaginatedPosts {
   @Field(() => [Post])
-  posts: Post[]
+  posts: Post[];
   @Field()
   hasMore: boolean;
 }
-@Resolver(Post )
+@Resolver(Post)
 export class PostResolver {
   @FieldResolver(() => String)
-  textSnippet(@Root() root: Post) {
-    return root.text.slice(0, 50);
+  textSnippet(@Root() post: Post) {
+    return post.text.slice(0, 50);
   }
 
   @Mutation(() => Boolean)
@@ -31,7 +32,7 @@ export class PostResolver {
   async vote(
     @Arg('postId', () => Int) postId: number,
     @Arg('value', () => Int) value: number,
-    @Ctx() {req}: MyContext
+    @Ctx() { req }: MyContext
   ) {
     const isUpdoot = value !== -1;
     const realValue = isUpdoot ? 1 : -1;
@@ -46,30 +47,38 @@ export class PostResolver {
         update updoot
         set value = $1
         where "postId" = $2 and "userId" = $3
-        `, [realValue, postId, userId]);
+        `, 
+          [realValue, postId, userId]
+        );
 
         await tm.query(
           `
           update post
           set points = points + $1
           where id = $2
-          `, [ 2 * realValue, postId]);
+        `,
+          [2 * realValue, postId]
+        );
       });
     } else if (!updoot) {
       await getConnection().transaction(async (tm) => {
         await tm.query(
         `
         insert into updoot ("userId", "postId", value)
-        values ($1,$2,$3)
-        `, [userId, postId, realValue]);
+        values ($1, $2, $3)
+      `, 
+        [userId, postId, realValue]
+      );
 
         await tm.query(
           `
           update post
           set points = points + $1
           where id = $2
-          `, [realValue, postId]);
-      })
+          `,
+          [realValue, postId]
+        );
+      });
     }
     return true;
   }
@@ -124,13 +133,11 @@ export class PostResolver {
   }
 
   @Mutation(() => Post)
+  @UseMiddleware(isAuth)
   async createPost(
     @Arg("input") input: PostInput,
     @Ctx() { req }: MyContext
   ): Promise<Post> { 
-     if (!req.session.userId) {
-      throw new Error("not authenticated");
-    }
     return Post.create({
       ...input,
       creatorId: req.session.userId,
@@ -168,8 +175,8 @@ export class PostResolver {
     @Arg("id", () => Int) id: number,
     @Ctx() { req }: MyContext
     // typescript type for the mutation
-  ): Promise<Boolean> {
-    await Post.delete({ id, creator: req.session.userId });
+  ): Promise<boolean> {
+    await Post.delete({ id, creatorId: req.session.userId });
     return true;
   }
 }

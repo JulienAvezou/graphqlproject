@@ -17,7 +17,7 @@ import { Updoot } from "./entities/Updoot";
 
 const main = async () => {
   // connect to db
-  const conn = await createConnection({
+  await createConnection({
     type: 'postgres',
     database: 'graphql2',
     username: 'postgres',
@@ -38,12 +38,11 @@ const main = async () => {
       credentials: true,
     })
   );
-
   app.use(
     session({
       name: COOKIE_NAME,
       store: new RedisStore({ 
-        client: redis,
+        client: redis as any,
         disableTouch: true,
       }),
       cookie: {
@@ -56,14 +55,14 @@ const main = async () => {
       secret: 'dhzidhziizcbizcho',
       resave: false,
     })
-  )
+  );
 
   const apolloServer = new ApolloServer({
     schema: await buildSchema({ 
       resolvers: [HelloResolver, PostResolver, UserResolver],
       validate: false,
     }),
-    context: ({ req, res }) => ({ req, res, redis })
+    context: ({ req, res }) => ({ req, res, redis }),
   });
 
   apolloServer.applyMiddleware({ 
@@ -79,9 +78,9 @@ const main = async () => {
 
   // em ==> entity manager
   // create new instance of Post (not saved yet!)
-  //* const post = orm.em.create(Post, {title: 'my first post'});
+  // const post = orm.em.create(Post, {title: 'my first post'});
   // now save it in db
-  //* await orm.em.persistAndFlush(post);
+  // await orm.em.persistAndFlush(post);
 
   // const posts = await orm.em.find(Post, {});
   // console.log(posts);

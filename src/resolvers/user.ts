@@ -20,16 +20,17 @@ class FieldError {
 // ObjectType used as return
 @ObjectType()
 class UserResponse {
-  @Field(() => [FieldError], {nullable: true})
-  errors?: FieldError[]
-  @Field(() => User, {nullable: true})
-  user?: User
+  @Field(() => [FieldError], { nullable: true })
+  errors?: FieldError[];
+  
+  @Field(() => User, { nullable: true })
+  user?: User;
 }
 
 @Resolver(User)
 export class UserResolver {
   @FieldResolver(() => String)
-  email(@Root() user: User, @Ctx() {req}: MyContext ) {
+  email(@Root() user: User, @Ctx() { req }: MyContext ) {
     // ok to show own email to current user
     if (req.session.userId === user.id) {
       return user.email;
@@ -37,7 +38,7 @@ export class UserResolver {
     return "";
   }
   @Mutation(() => UserResponse)
-  async ChangePassword(
+  async changePassword(
     @Arg('token') token: string,
     @Arg('newPassword') newPassword: string,
     @Ctx() { redis, req }: MyContext
@@ -49,11 +50,11 @@ export class UserResolver {
             field: "newPassword",
             message: "password must be greater than 2",
           },
-        ] 
+        ],
       };
     }
 
-    const key = FORGET_PASSWORD_PREFIX+token;
+    const key = FORGET_PASSWORD_PREFIX + token;
     const userId = await redis.get(key);
     if (!userId) {
       return {
@@ -67,7 +68,7 @@ export class UserResolver {
     }
 
     const userIdNum = parseInt(userId)
-    const user = User.findOne(userIdNum);
+    const user = await User.findOne(userIdNum);
 
     if (!user) {
       return {
@@ -101,13 +102,16 @@ export class UserResolver {
     if (!user) {
       return true;
     }
+
     const token = v4();
+
     await redis.set(
       FORGET_PASSWORD_PREFIX + token,
       user.id,
       'ex',
       1000 * 60 * 60 * 24 * 3 // 3 days
     );
+
     await sendEmail(
       email,
       `<a href="http://localhost:3000/change-password/${token}">reset password</a>`
@@ -146,17 +150,21 @@ export class UserResolver {
     try {
       // could just run line below instead of rest
       // return Post.create({ title }).save();
-      const result = await getConnection().createQueryBuilder().insert().into(User).values({
-        username: options.username,
-        email: options.email,
-        password: hashedPassword,
-      })
-      .returning('*')
-      .execute();
+      const result = await getConnection()
+        .createQueryBuilder()
+        .insert()
+        .into(User)
+        .values({
+          username: options.username,
+          email: options.email,
+          password: hashedPassword,
+        })
+        .returning('*')
+        .execute();
       user = result.raw[0];
     } catch(err) {
       // duplicat username error
-      if (err.code === "2505" || err.detail.includes("already exists")) {
+      if (err.code === "23505" || err.detail.includes("already exists")) {
         return {
           errors: [
             {
@@ -164,7 +172,7 @@ export class UserResolver {
               message: "username already taken",
             },
           ],
-        }
+        };
       }
     }
     // keep user logged in on register
@@ -182,30 +190,36 @@ export class UserResolver {
     const user = await User.findOne(
       usernameOrEmail.includes('@')
       ? { where: { email: usernameOrEmail } }
-      : { where: { username: usernameOrEmail } });
+      : { where: { username: usernameOrEmail } }
+    );
     if (!user) {
       return {
-        errors: [{
-          field: "usernameOrEmail",
-          message: "that username doesn't exist",
-        }]
-      }
+        errors: [
+          {
+            field: "usernameOrEmail",
+            message: "that username doesn't exist",
+          },
+        ],
+      };
     }
     const valid = await argon2.verify(user.password, password);
     if (!valid) {
       return {
-        errors: [{
-          field: "password",
-          message: "password incorrect",
-        }]
-      }
+        errors: 
+        [
+          {
+            field: "password",
+            message: "password incorrect",
+          },
+        ],
+      };
     }
 
     req.session.userId = user.id;
 
     return {
       user,
-    }
+    };
   }
 
   @Mutation(() => Boolean)

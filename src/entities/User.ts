@@ -15,12 +15,12 @@ export class User extends BaseEntity {
 
   // represents one column in table
   @Field()
-  @Column({unique: true})
+  @Column({ unique: true })
   username!: string;
 
   // represents one column in table
   @Field()
-  @Column({unique: true})
+  @Column({ unique: true })
   email!: string;
 
    // represents one column in table

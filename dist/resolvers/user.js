@@ -67,7 +67,7 @@ let UserResolver = class UserResolver {
         }
         return "";
     }
-    ChangePassword(token, newPassword, { redis, req }) {
+    changePassword(token, newPassword, { redis, req }) {
         return __awaiter(this, void 0, void 0, function* () {
             if (newPassword.length <= 2) {
                 return {
@@ -76,7 +76,7 @@ let UserResolver = class UserResolver {
                             field: "newPassword",
                             message: "password must be greater than 2",
                         },
-                    ]
+                    ],
                 };
             }
             const key = constants_1.FORGET_PASSWORD_PREFIX + token;
@@ -92,7 +92,7 @@ let UserResolver = class UserResolver {
                 };
             }
             const userIdNum = parseInt(userId);
-            const user = User_1.User.findOne(userIdNum);
+            const user = yield User_1.User.findOne(userIdNum);
             if (!user) {
                 return {
                     errors: [
@@ -141,7 +141,11 @@ let UserResolver = class UserResolver {
             const hashedPassword = yield argon2_1.default.hash(options.password);
             let user;
             try {
-                const result = yield typeorm_1.getConnection().createQueryBuilder().insert().into(User_1.User).values({
+                const result = yield typeorm_1.getConnection()
+                    .createQueryBuilder()
+                    .insert()
+                    .into(User_1.User)
+                    .values({
                     username: options.username,
                     email: options.email,
                     password: hashedPassword,
@@ -151,7 +155,7 @@ let UserResolver = class UserResolver {
                 user = result.raw[0];
             }
             catch (err) {
-                if (err.code === "2505" || err.detail.includes("already exists")) {
+                if (err.code === "23505" || err.detail.includes("already exists")) {
                     return {
                         errors: [
                             {
@@ -173,19 +177,23 @@ let UserResolver = class UserResolver {
                 : { where: { username: usernameOrEmail } });
             if (!user) {
                 return {
-                    errors: [{
+                    errors: [
+                        {
                             field: "usernameOrEmail",
                             message: "that username doesn't exist",
-                        }]
+                        },
+                    ],
                 };
             }
             const valid = yield argon2_1.default.verify(user.password, password);
             if (!valid) {
                 return {
-                    errors: [{
+                    errors: [
+                        {
                             field: "password",
                             message: "password incorrect",
-                        }]
+                        },
+                    ],
                 };
             }
             req.session.userId = user.id;
@@ -221,7 +229,7 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String, Object]),
     __metadata("design:returntype", Promise)
-], UserResolver.prototype, "ChangePassword", null);
+], UserResolver.prototype, "changePassword", null);
 __decorate([
     type_graphql_1.Mutation(() => Boolean),
     __param(0, type_graphql_1.Arg("email")), __param(1, type_graphql_1.Ctx()),

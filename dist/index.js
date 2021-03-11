@@ -29,7 +29,7 @@ const Post_1 = require("./entities/Post");
 const User_1 = require("./entities/User");
 const Updoot_1 = require("./entities/Updoot");
 const main = () => __awaiter(void 0, void 0, void 0, function* () {
-    const conn = yield typeorm_1.createConnection({
+    yield typeorm_1.createConnection({
         type: 'postgres',
         database: 'graphql2',
         username: 'postgres',
@@ -66,7 +66,7 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
             resolvers: [hello_1.HelloResolver, post_1.PostResolver, user_1.UserResolver],
             validate: false,
         }),
-        context: ({ req, res }) => ({ req, res, redis })
+        context: ({ req, res }) => ({ req, res, redis }),
     });
     apolloServer.applyMiddleware({
         app,
