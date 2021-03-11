@@ -22,7 +22,7 @@ const validateRegister = (options) => {
         return [
             {
                 field: "username",
-                message: "cannot include @ sign",
+                message: "cannot include @",
             },
         ];
     }

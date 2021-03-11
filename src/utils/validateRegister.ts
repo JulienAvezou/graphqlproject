@@ -24,7 +24,7 @@ export const validateRegister = (options: UsernamePasswordInput) => {
     return [
       {
         field: "username",
-        message: "cannot include @ sign",
+        message: "cannot include @",
       },
     ];
   }
@@ -37,5 +37,6 @@ export const validateRegister = (options: UsernamePasswordInput) => {
       },
     ];
   }
+
   return null;
-}
+};
